@@ -1,0 +1,91 @@
+.custom-calendar {
+  width: 100%;
+  max-width: 600px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  font-family: inherit;
+}
+
+.custom-calendar .react-calendar__navigation {
+  display: flex;
+  margin-bottom: 1rem;
+}
+
+.custom-calendar .react-calendar__navigation button {
+  min-width: 44px;
+  background: none;
+  font-size: 16px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+
+.custom-calendar .react-calendar__navigation button:enabled:hover,
+.custom-calendar .react-calendar__navigation button:enabled:focus {
+  background-color: #f3f4f6;
+}
+
+.custom-calendar .react-calendar__navigation button[disabled] {
+  opacity: 0.5;
+}
+
+.custom-calendar .react-calendar__month-view__weekdays {
+  text-align: center;
+  text-transform: uppercase;
+  font-weight: 500;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.custom-calendar .react-calendar__month-view__days__day {
+  padding: 8px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #374151;
+  position: relative;
+}
+
+.custom-calendar .react-calendar__month-view__days__day:enabled:hover,
+.custom-calendar .react-calendar__month-view__days__day:enabled:focus {
+  background-color: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+.custom-calendar .react-calendar__month-view__days__day--weekend {
+  color: #ef4444;
+}
+
+.custom-calendar .react-calendar__month-view__days__day--neighboringMonth {
+  color: #9ca3af;
+}
+
+.custom-calendar .react-calendar__tile--now {
+  background: #dbeafe;
+  font-weight: 600;
+}
+
+.custom-calendar .react-calendar__tile--active {
+  background: #2563eb;
+  color: white;
+}
+
+.custom-calendar .react-calendar__tile--active:enabled:hover,
+.custom-calendar .react-calendar__tile--active:enabled:focus {
+  background: #1d4ed8;
+}
+
+.custom-calendar .has-events {
+  font-weight: 600;
+}
+
+.custom-calendar .react-calendar__tile {
+  position: relative;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
