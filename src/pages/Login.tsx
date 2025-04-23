@@ -1,40 +1,97 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../store/authSlice';
 import { useMsal } from '@azure/msal-react';
 import { loginRequest } from '../config/authConfig';
+import { authApi } from '../services/api';
+import { useSnackbar } from 'notistack';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { instance } = useMsal();
+  const { enqueueSnackbar } = useSnackbar();
 
-  // For demo: hardcode admin email
-  const adminEmail = 'admin@leave.com';
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, check credentials with backend
-    const role = email === adminEmail ? 'admin' : 'user';
-    dispatch(login({
-      id: Date.now().toString(),
-      name: email.split('@')[0],
-      email,
-      role,
-      token: 'demo-token',
-    }));
-    navigate('/dashboard');
+    setIsLoading(true);
+
+    try {
+      const response = await authApi.login(email, password);
+      
+      // Store the token
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify({
+        id: response.id,
+        names: response.names,
+        role: response.role,
+        phone: response.phone,
+        departmentId: response.departmentId,
+        departmentName: response.departmentName,
+        status: response.status,
+        lastLogin: response.lastLogin,
+        createdAt: response.createdAt,
+      }));
+
+      enqueueSnackbar('Login successful', { variant: 'success' });
+      navigate('/dashboard');
+    } catch (error: any) {
+      enqueueSnackbar(
+        error.response?.data?.message || 'Login failed. Please check your credentials.',
+        { variant: 'error' }
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleMicrosoftLogin = async () => {
     try {
-      window.location.href = 'https://severely-ace-wolf.ngrok-free.app/api/oauth2/authorization/microsoft';
+      // Use MSAL to login
+      const loginResponse = await instance.loginPopup(loginRequest);
+      const accessToken = loginResponse.accessToken;
+
+      // Fetch user profile from Microsoft Graph
+      const profileResponse = await fetch('https://graph.microsoft.com/v1.0/me', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const profile = await profileResponse.json();
+
+      // Fetch user profile photo (as blob)
+      const photoResponse = await fetch('https://graph.microsoft.com/v1.0/me/photo/$value', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      let photoUrl = undefined;
+      if (photoResponse.ok) {
+        const photoBlob = await photoResponse.blob();
+        photoUrl = URL.createObjectURL(photoBlob);
+      }
+
+      // Store user info in localStorage
+      const userToStore = {
+        id: profile.id,
+        names: profile.displayName,
+        email: profile.mail || profile.userPrincipalName,
+        role: 'USER', // Default role, adjust if needed
+        avatar: photoUrl || (profile.givenName ? profile.givenName.charAt(0).toUpperCase() : profile.displayName.charAt(0).toUpperCase()),
+        // Add more fields as needed
+      };
+      localStorage.setItem('user', JSON.stringify(userToStore));
+      localStorage.setItem('token', accessToken);
+
+      // Log user profile and photo URL
+      console.log('Microsoft User Profile:', profile);
+      if (photoUrl) {
+        console.log('Profile Photo URL:', photoUrl);
+      } else {
+        console.log('No profile photo found. Dummy avatar:', userToStore.avatar);
+      }
+      enqueueSnackbar('Microsoft login successful', { variant: 'success' });
+      navigate('/dashboard');
     } catch (error) {
-      // Handle error (show notification, etc.)
       console.error('Microsoft login failed', error);
+      enqueueSnackbar('Microsoft login failed', { variant: 'error' });
     }
   };
 
@@ -68,9 +125,12 @@ export default function Login() {
           />
           <button
             type="submit"
-            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            disabled={isLoading}
+            className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+              isLoading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
-            Sign in
+            {isLoading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
         <div className="flex justify-center mt-4">

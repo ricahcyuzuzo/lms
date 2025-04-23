@@ -2,8 +2,8 @@ import { Configuration, PopupRequest } from '@azure/msal-browser';
 
 export const msalConfig: Configuration = {
   auth: {
-    clientId: '66d1921e-53e9-431c-ae99-5806a3bd4a1a',
-    authority: 'https://login.microsoftonline.com/be802d76-7510-471a-a935-b61dbedae354',
+    clientId: '5807de9a-ed05-4f13-89b8-cfd81c6bc48f',
+    authority: 'https://login.microsoftonline.com/common',
     redirectUri: 'http://localhost:3000',
     postLogoutRedirectUri: 'http://localhost:3000',
     navigateToLoginRequestUrl: true,

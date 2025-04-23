@@ -1,0 +1,6 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="20" cy="20" r="20" fill="#2563eb"/>
+  <path d="M12 28c2-5 8-7 10-14 1-4-2-7-6-7-4 0-7 3-7 7 0 6 5 8 3 14z" fill="#fff"/>
+  <circle cx="25" cy="13" r="3" fill="#fbbf24"/>
+  <text x="20" y="35" text-anchor="middle" font-size="10" fill="#fff" font-family="Arial" font-weight="bold">HR</text>
+</svg>

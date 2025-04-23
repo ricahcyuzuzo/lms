@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Listbox, Transition } from '@headlessui/react';
 import { ChevronUpDownIcon } from '@heroicons/react/24/outline';
+import { leaveApi, LeaveHistoryItem } from '../services/api';
 import Calendar from '../components/Calendar';
+import CircularProgress from '@mui/material/CircularProgress';
 
 interface Department {
   id: string;
@@ -17,6 +19,32 @@ const departments: Department[] = [
 
 export default function TeamCalendar() {
   const [selectedDepartment, setSelectedDepartment] = useState<Department>(departments[0]);
+  const [leaves, setLeaves] = useState<LeaveHistoryItem[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchLeaveData = async () => {
+    try {
+      setLoading(true);
+      const response = await leaveApi.getLeaveHistory();
+      setLeaves(response.data);
+    } catch (error) {
+      console.error('Error fetching leaves:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLeaveData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <CircularProgress />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -45,14 +73,14 @@ export default function TeamCalendar() {
                   {departments.map((department) => (
                     <Listbox.Option
                       key={department.id}
-                      className={({ active }: { active: boolean }) =>
+                      className={({ active }) =>
                         `relative cursor-default select-none py-2 pl-10 pr-4 ${
                           active ? 'bg-blue-100 text-blue-900' : 'text-gray-900'
                         }`
                       }
                       value={department}
                     >
-                      {({ selected }: { selected: boolean }) => (
+                      {({ selected }) => (
                         <>
                           <span
                             className={`block truncate ${
@@ -61,11 +89,6 @@ export default function TeamCalendar() {
                           >
                             {department.name}
                           </span>
-                          {selected ? (
-                            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
-                              <CheckIcon className="h-5 w-5" aria-hidden="true" />
-                            </span>
-                          ) : null}
                         </>
                       )}
                     </Listbox.Option>
@@ -77,7 +100,9 @@ export default function TeamCalendar() {
         </div>
       </div>
 
-      <Calendar />
+      <div className="mt-6">
+        <Calendar leaves={leaves} />
+      </div>
     </div>
   );
 }
