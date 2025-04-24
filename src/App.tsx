@@ -16,6 +16,7 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { MSALProviderWrapper } from './MSALProviderWrapper';
 import NotificationsPage from './pages/Notifications';
+import Users from './pages/Users';
 
 const theme = createTheme({
   palette: {
@@ -46,6 +47,11 @@ function App() {
                   <Route path="history" element={<LeaveHistory />} />
                   <Route path="calendar" element={<TeamCalendar />} />
                   <Route path="notifications" element={<NotificationsPage />} />
+                  {/* <Route path="users" element={
+                    <ProtectedRoute requiredRole="ADMIN">
+                      <Users />
+                    </ProtectedRoute>
+                  } /> */}
                   <Route path="admin" element={
                     <ProtectedRoute requiredRole="ADMIN">
                       <AdminPanel />

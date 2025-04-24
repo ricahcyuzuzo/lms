@@ -68,27 +68,43 @@ export default function Login() {
         photoUrl = URL.createObjectURL(photoBlob);
       }
 
-      // Store user info in localStorage
-      const userToStore = {
-        id: profile.id,
-        names: profile.displayName,
-        email: profile.mail || profile.userPrincipalName,
-        role: 'USER', // Default role, adjust if needed
-        avatar: photoUrl || (profile.givenName ? profile.givenName.charAt(0).toUpperCase() : profile.displayName.charAt(0).toUpperCase()),
-        // Add more fields as needed
-      };
-      localStorage.setItem('user', JSON.stringify(userToStore));
-      localStorage.setItem('token', accessToken);
+      // Register user in our system
+      try {
+        // Default department ID - you might want to make this configurable
+        const departmentId = 1;
+        const names = profile.displayName;
+        const email = profile.mail || profile.userPrincipalName;
+        const role = "USER";
 
-      // Log user profile and photo URL
-      console.log('Microsoft User Profile:', profile);
-      if (photoUrl) {
-        console.log('Profile Photo URL:', photoUrl);
-      } else {
-        console.log('No profile photo found. Dummy avatar:', userToStore.avatar);
+        const apiResponse = await authApi.register(names, email, departmentId, role);
+        
+        // Store user info from API response in localStorage
+        const userToStore = {
+          id: apiResponse.id,
+          names: apiResponse.names,
+          email: apiResponse.email,
+          role: apiResponse.role,
+          departmentId: apiResponse.departmentId,
+          departmentName: apiResponse.departmentName,
+          status: apiResponse.status,
+          lastLogin: apiResponse.lastLogin,
+          createdAt: apiResponse.createdAt,
+          avatar: photoUrl || (profile.givenName ? profile.givenName.charAt(0).toUpperCase() : profile.displayName.charAt(0).toUpperCase()),
+        };
+        
+        localStorage.setItem('user', JSON.stringify(userToStore));
+        localStorage.setItem('token', apiResponse.token);
+
+        console.log('User registered and logged in:', userToStore);
+        enqueueSnackbar('Registration successful', { variant: 'success' });
+        navigate('/dashboard');
+      } catch (apiError: any) {
+        console.error('API registration failed', apiError);
+        enqueueSnackbar(
+          apiError.response?.data?.message || 'Registration failed',
+          { variant: 'error' }
+        );
       }
-      enqueueSnackbar('Microsoft login successful', { variant: 'success' });
-      navigate('/dashboard');
     } catch (error) {
       console.error('Microsoft login failed', error);
       enqueueSnackbar('Microsoft login failed', { variant: 'error' });

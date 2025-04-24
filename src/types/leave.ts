@@ -26,7 +26,7 @@ export interface User {
   email: string;
   name: string;
   department: string;
-  role: 'STAFF' | 'MANAGER' | 'ADMIN';
+  role: 'USER' | 'MANAGER' | 'ADMIN';
   profilePicture?: string;
   managerId?: string;
 }

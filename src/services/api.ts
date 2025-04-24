@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://127.0.0.1:3658/m1/782658-760875-default';
+const BASE_URL = 'http://localhost:8080';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -163,6 +163,16 @@ export const authApi = {
     });
     return response.data;
   },
+  
+  register: async (names: string, email: string, departmentId: number, role: string): Promise<LoginResponse> => {
+    const response = await api.post<LoginResponse>('/api/auth/register', {
+      names,
+      email,
+      departmentId,
+      role
+    });
+    return response.data;
+  },
 };
 
 export const leaveApi = {
@@ -190,8 +200,8 @@ export const leaveApi = {
     return response.data.data;
   },
 
-  getDashboardData: async (): Promise<DashboardData['data']> => {
-    const response = await api.get<DashboardData>('/api/dashboard');
+  getDashboardData: async (employeeId: number): Promise<DashboardData['data']> => {
+    const response = await api.get<DashboardData>(`/api/leave-balance/${employeeId}/report`);
     return response.data.data;
   },
 
@@ -224,7 +234,7 @@ export const leaveApi = {
 export const notificationsApi = {
   getUserNotifications: async (userId: number) => {
     const response = await api.get(`/api/notifications/user/${userId}`);
-    return response.data;
+    return response.data.data;
   },
   markAsRead: async (notifId: number, operator: number) => {
     const response = await api.put(`/api/notifications/${notifId}/read`, {
@@ -233,6 +243,13 @@ export const notificationsApi = {
       operator,
     });
     return response.data;
+  },
+};
+
+export const usersApi = {
+  getUsers: async () => {
+    const response = await api.get('/api/users');
+    return response.data.data;
   },
 };
 

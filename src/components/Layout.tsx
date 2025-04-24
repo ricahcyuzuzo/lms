@@ -34,8 +34,17 @@ const getNavigation = (role: UserRole | null) => {
     { name: 'Team Calendar', href: '/calendar', icon: CalendarIcon },
   ];
 
-  // Admin and manager can see the admin panel
-  if (role === 'ADMIN' || role === 'MANAGER') {
+  // Admin-specific navigation items
+  if (role === 'ADMIN') {
+    return [
+      ...baseNavigation, 
+      { name: 'Users', href: '/users', icon: UserGroupIcon },
+      { name: 'Admin Panel', href: '/admin', icon: Cog6ToothIcon }
+    ];
+  }
+  
+  // Manager can see the admin panel
+  if (role === 'MANAGER') {
     return [...baseNavigation, { name: 'Admin Panel', href: '/admin', icon: Cog6ToothIcon }];
   }
 

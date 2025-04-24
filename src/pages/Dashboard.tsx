@@ -57,11 +57,12 @@ export default function Dashboard() {
       setLoading(true);
       const [leaveHistory, dashboardData] = await Promise.all([
         leaveApi.getLeaveHistory(),
-        leaveApi.getDashboardData()
+        leaveApi.getDashboardData(user.id)
       ]);
 
       setLeaves(leaveHistory.data);
       setLeaveBalances(dashboardData.leaveBalances);
+      setUpcomingLeaves(dashboardData.upcomingLeaves || []);
       setLoading(false);
     } catch (error) {
       setLoading(false);
