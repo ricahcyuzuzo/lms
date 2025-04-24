@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:8080';
+const BASE_URL = 'http://127.0.0.1:3658/m1/782658-760875-default';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -175,6 +175,21 @@ export const authApi = {
   },
 };
 
+// Type for leave balance report response
+export interface LeaveBalanceReport {
+  userId: number;
+  totalEntitlementDays: number;
+  carryOverDays: number;
+  takenLeaves: {
+    sickLeaves: number;
+    maternityLeaves: number;
+    otherLeaves: number;
+    totalTaken: number;
+  };
+  remainingLeaveDays: number;
+  totalLeavesEntitled: number;
+}
+
 export const leaveApi = {
   applyLeave: async (leaveRequest: Omit<LeaveRequest, 'status'>): Promise<LeaveResponse> => {
     const request = {
@@ -229,6 +244,13 @@ export const leaveApi = {
   //   const response = await api.patch<LeaveHistoryItem>(`/api/leave/${leaveId}/reject`, { comment });
   //   return response.data;
   // }
+  /**
+   * Get leave balance report for dashboard
+   */
+  async getLeaveBalanceReport(userId: number): Promise<LeaveBalanceReport> {
+    const response = await api.get<LeaveBalanceReport>(`/api/leave-balance/${userId}/report`);
+    return response.data;
+  }
 };
 
 export const notificationsApi = {

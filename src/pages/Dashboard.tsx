@@ -52,6 +52,11 @@ export default function Dashboard() {
   const [upcomingLeaves, setUpcomingLeaves] = useState<LeaveHistoryItem[]>([]);
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
 
+  // New: Leave balance report state
+  const [balanceReport, setBalanceReport] = useState<import('../services/api').LeaveBalanceReport | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
+
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
@@ -71,6 +76,21 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+    // Fetch leave balance report
+    const fetchReport = async () => {
+      if (!user?.id) return;
+      setReportLoading(true);
+      setReportError(null);
+      try {
+        const data = await leaveApi.getLeaveBalanceReport(user.id);
+        setBalanceReport(data);
+      } catch (err) {
+        setReportError('Failed to load leave balance report');
+      } finally {
+        setReportLoading(false);
+      }
+    };
+    fetchReport();
   }, []);
 
   if (loading) {
@@ -111,8 +131,91 @@ export default function Dashboard() {
     window.location.href = '/login';
   };
 
+  // --- Upcoming leaves rows for table ---
+  const today = startOfToday();
+  const upcoming = leaves
+    .filter(l => l.status > 0 && parseISO(l.fromDate) > today)
+    .sort((a, b) => parseISO(a.fromDate).getTime() - parseISO(b.fromDate).getTime());
+  const upcomingLeavesRows = upcoming.length === 0
+    ? (
+      <tr>
+        <td colSpan={3} className="px-6 py-4 text-center text-gray-500">
+          No upcoming leaves.
+        </td>
+      </tr>
+    )
+    : upcoming.map((leave: LeaveHistoryItem) => (
+      <tr key={leave.id}>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <div className="text-sm font-medium text-gray-900">
+            {leave.leaveType.title}
+          </div>
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <div className="text-sm text-gray-900">
+            {format(parseISO(leave.fromDate), 'MMM dd, yyyy')}
+            {!leave.isFullDay && ' (Half Day)'}
+            {' - '}
+            {format(parseISO(leave.returnDate), 'MMM dd, yyyy')}
+          </div>
+        </td>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <Chip
+            label={leave.status > 0 ? 'Approved' : leave.status < 0 ? 'Rejected' : 'Pending'}
+            color={leave.status > 0 ? 'success' : leave.status < 0 ? 'error' : 'warning'}
+            size="small"
+          />
+        </td>
+      </tr>
+    ));
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      {/* Leave Balance Report Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {reportLoading ? (
+          <div className="col-span-full flex justify-center items-center h-32">
+            <CircularProgress />
+          </div>
+        ) : reportError ? (
+          <div className="col-span-full text-red-600 text-center">{reportError}</div>
+        ) : balanceReport && (
+          <>
+            <div className="bg-blue-100 border-l-4 border-blue-500 p-4 rounded shadow flex flex-col">
+              <span className="text-blue-700 font-semibold">Total Entitlement</span>
+              <span className="text-2xl font-bold">{balanceReport.totalEntitlementDays}</span>
+            </div>
+            <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded shadow flex flex-col">
+              <span className="text-yellow-700 font-semibold">Carry Over</span>
+              <span className="text-2xl font-bold">{balanceReport.carryOverDays}</span>
+            </div>
+            <div className="bg-red-100 border-l-4 border-red-500 p-4 rounded shadow flex flex-col">
+              <span className="text-red-700 font-semibold">Total Taken</span>
+              <span className="text-2xl font-bold">{balanceReport.takenLeaves.totalTaken}</span>
+            </div>
+            <div className="bg-green-100 border-l-4 border-green-500 p-4 rounded shadow flex flex-col">
+              <span className="text-green-700 font-semibold">Remaining Days</span>
+              <span className="text-2xl font-bold">{balanceReport.remainingLeaveDays}</span>
+            </div>
+            <div className="bg-pink-100 border-l-4 border-pink-500 p-4 rounded shadow flex flex-col">
+              <span className="text-pink-700 font-semibold">Sick Leaves</span>
+              <span className="text-2xl font-bold">{balanceReport.takenLeaves.sickLeaves}</span>
+            </div>
+            <div className="bg-purple-100 border-l-4 border-purple-500 p-4 rounded shadow flex flex-col">
+              <span className="text-purple-700 font-semibold">Maternity Leaves</span>
+              <span className="text-2xl font-bold">{balanceReport.takenLeaves.maternityLeaves}</span>
+            </div>
+            <div className="bg-indigo-100 border-l-4 border-indigo-500 p-4 rounded shadow flex flex-col">
+              <span className="text-indigo-700 font-semibold">Other Leaves</span>
+              <span className="text-2xl font-bold">{balanceReport.takenLeaves.otherLeaves}</span>
+            </div>
+            <div className="bg-cyan-100 border-l-4 border-cyan-500 p-4 rounded shadow flex flex-col">
+              <span className="text-cyan-700 font-semibold">Total Leaves Entitled</span>
+              <span className="text-2xl font-bold">{balanceReport.totalLeavesEntitled}</span>
+            </div>
+          </>
+        )}
+      </div>
       {/* Header with sign out */}
       <div className="flex items-center justify-between">
         <div>
@@ -233,37 +336,7 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {upcomingLeaves.length === 0 ? (
-                      <tr>
-                        <td colSpan={3} className="px-6 py-4 text-center text-gray-500">
-                          No upcoming leaves.
-                        </td>
-                      </tr>
-                    ) : (
-                      upcomingLeaves.map((leave: LeaveHistoryItem) => (
-                      <tr key={leave.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            {leave.leaveType.title}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {format(parseISO(leave.fromDate), 'MMM dd, yyyy')}
-                            {!leave.isFullDay && ' (Half Day)'}
-                            {' - '}
-                            {format(parseISO(leave.returnDate), 'MMM dd, yyyy')}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Chip
-                            label={leave.status > 0 ? 'Approved' : leave.status < 0 ? 'Rejected' : 'Pending'}
-                            color={leave.status > 0 ? 'success' : leave.status < 0 ? 'error' : 'warning'}
-                            size="small"
-                          />
-                        </td>
-                      </tr>
-                    )))}
+                    {upcomingLeavesRows}
                   </tbody>
                 </table>
               </div>
